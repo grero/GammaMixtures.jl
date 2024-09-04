@@ -16,14 +16,14 @@ using StableRNGs
     @show Δt
 
     t0 = time()
-    model20 = GammaMixture(2, x, NaiveInitializer)
-    Δt = time() - t0
-    @show Δt
-
-    t0 = time()
     model1,converged,Δl = fit!(model10, x;niter=10_000)
     Δt = time() - t0
     @show model converged Δl Δt
+
+    t0 = time()
+    model20 = GammaMixture(2, x, NaiveInitializer)
+    Δt = time() - t0
+    @show Δt
 
     t0 = time()
     model2,converged,Δl = fit!(model20, x;niter=10_000)
