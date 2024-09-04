@@ -14,7 +14,10 @@ struct GammaMixture{T<:Real} <: StatsBase.StatisticalModel
     α::Vector{T}
     β::Vector{T}
     λ::Vector{T}
+    converged::Bool
 end
+
+GammaMixture(α::Vector{T}, β::Vector{T}, λ::Vector{T}) where T <: Real = GammaMixture(α, β, λ, false)
 
 abstract type AbstractInitializer end
 
@@ -185,18 +188,18 @@ function fit_gamma_mixture(x::AbstractVector{T}, m::Integer;niter=100,α0::Union
             break
         end
     end
-    GammaMixture(α[:], β[:], λ[:]), converged, Δl
+    GammaMixture(α[:], β[:], λ[:], converged), Δl
 end
 
 function StatsBase.fit(::Type{GammaMixture}, x,k::Integer;initializer::Type{<:AbstractInitializer}=MOMInitializer, kwargs...)
     model0 = GammaMixture(k, x, initializer)
-    model, converged = fit!(model0, x;kwargs...)
+    model, Δl = fit!(model0, x;kwargs...)
 end
 
 function StatsBase.fit!(model::GammaMixture, x;kwargs...)
     k = length(model.λ)
     α0, β0, λ0 = (model.α, model.β, model.λ)
-    model,converged = fit_gamma_mixture(x, k;α0=α0, β0=β0, λ0=λ0,kwargs...)
+    model,Δl = fit_gamma_mixture(x, k;α0=α0, β0=β0, λ0=λ0,kwargs...)
 end
 
 end # module GammaMixtures
