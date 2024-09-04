@@ -166,7 +166,6 @@ function fit_gamma_mixture(x::AbstractVector{T}, m::Integer;niter=100,α0::Union
 
     # indicator variable
     z = λ.*g.(x,α,β)./f(x,α,β,λ)
-    @show α, β, λ
     l0 = ll(z,x,α,β)
     Δl = 0.0
     converged = false
