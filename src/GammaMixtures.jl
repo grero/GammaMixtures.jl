@@ -8,7 +8,7 @@ using LinearAlgebra
 using GaussianMixtures
 using Logging
 
-export GammaMixture, NaiveInitializer, MOMInitializer
+export GammaMixture, NaiveInitializer, MOMInitializer, posterior, component_pdf
 
 struct GammaMixture{T<:Real} <: StatsBase.StatisticalModel
     α::Vector{T}
@@ -16,6 +16,21 @@ struct GammaMixture{T<:Real} <: StatsBase.StatisticalModel
     λ::Vector{T}
     converged::Bool
 end
+
+component_pdf(g::Gamma,x) = pdf.(g,x)
+
+function component_pdf(model::GammaMixture{T}, x::AbstractVector{T}) where T <: Real
+    m = length(model.α)
+    α = fill(0.0, 1, m)
+    α[1,:] .= model.α
+    β = fill(0.0, 1, m)
+    β[1,:] .= model.β
+    λ = fill(0.0, 1, m)
+    λ[1,:] .= model.λ
+    prob = λ.*pdf.(Gamma.(α, β),x)
+end
+
+Distributions.pdf(gm::GammaMixture, x) = dropdims(sum(component_pdf(gm, x),dims=2),dims=2)
 
 GammaMixture(α::Vector{T}, β::Vector{T}, λ::Vector{T}) where T <: Real = GammaMixture(α, β, λ, false)
 
@@ -80,6 +95,15 @@ function StatsBase.loglikelihood(model::GammaMixture, x)
     α = reshape(model.α,1,m)
     λ = reshape(model.λ, 1, m)
     sum(log.(sum(λ.*pdf.(Gamma.(α,β), x),dims=2)))
+end
+
+function posterior(model::GammaMixture, x)
+    m = length(model.α)
+    α = reshape(model.α,1,m)
+    β = reshape(model.β,1,m)
+    λ = reshape(model.λ,1,m)
+    z = λ.*pdf.(Gamma.(α,β),x)
+    z ./= sum(z,dims=2)
 end
 
 function StatsBase.bic(model::GammaMixture, x)
